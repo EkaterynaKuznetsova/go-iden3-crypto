@@ -10,27 +10,30 @@ import (
 )
 
 // A is one of the babyjub constants.
-var A *big.Int
+var A *big.Int = utils.NewIntFromString("168700")
 
 // Aff is A value in *ff.Element representation
 var Aff *ff.Element
 
 // D is one of the babyjub constants.
-var D *big.Int
+var D *big.Int = utils.NewIntFromString("168696")
 
 // Dff is D value in *ff.Element representation
 var Dff *ff.Element
 
 // Order of the babyjub curve.
-var Order *big.Int
+var Order *big.Int = utils.NewIntFromString("21888242871839275222246405745257275088614511777268538073601725287587578984328")
 
 // SubOrder is the order of the subgroup of the babyjub curve that contains the
 // points that we use.
-var SubOrder *big.Int
+var SubOrder *big.Int = new(big.Int).Rsh(Order, 3)
 
 // B8 is a base point of the babyjub multiplied by 8 to make it a base point of
 // the subgroup in the curve.
-var B8 *Point
+var B8 *Point = &Point{
+	X: utils.NewIntFromString("5299619240641551281634865583518297030282874472190772894086521144482721001553"),
+	Y: utils.NewIntFromString("16950150798460657717958625567821834550301663161624707787222815936182638968203"),
+}
 
 // init initializes global numbers and the subgroup base.
 func init() {
