@@ -312,6 +312,33 @@ func (k *PrivateKey) SignPoseidon(msg *big.Int) *Signature {
 	return &Signature{R8: R8, S: S}
 }
 
+// SignPoseidon signs a message encoded as a big.Int in Zq using blake-512 hash
+// for buffer hashing and Poseidon for big.Int hashing.
+func (scalar *PrivKeyScalar) SignPoseidonScalar(msg *big.Int) *Signature {
+	h1 := Blake512(scalar.BigInt().Bytes())
+	msgBuf := utils.BigIntLEBytes(msg)
+	msgBuf32 := [32]byte{}
+	copy(msgBuf32[:], msgBuf[:])
+	rBuf := Blake512(append(h1[32:], msgBuf32[:]...))
+	r := utils.SetBigIntFromLEBytes(new(big.Int), rBuf) // r = H(H_{32..63}(k), msg)
+	r.Mod(r, SubOrder)
+	R8 := NewPoint().Mul(r, B8) // R8 = r * 8 * B
+	A := scalar.Public().Point()
+
+	hmInput := []*big.Int{R8.X, R8.Y, A.X, A.Y, msg}
+	hm, err := poseidon.Hash(hmInput) // hm = H1(8*R.x, 8*R.y, A.x, A.y, msg)
+	if err != nil {
+		panic(err)
+	}
+
+	S := new(big.Int).Lsh(scalar.BigInt(), 3)
+	S = S.Mul(hm, S)
+	S.Add(r, S)
+	S.Mod(S, SubOrder) // S = r + hm * 8 * s
+
+	return &Signature{R8: R8, S: S}
+}
+
 // VerifyPoseidon verifies the signature of a message encoded as a big.Int in Zq
 // using blake-512 hash for buffer hashing and Poseidon for big.Int hashing.
 func (pk *PublicKey) VerifyPoseidon(msg *big.Int, sig *Signature) bool {
